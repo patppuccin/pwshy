@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json.schemastore.org/global",
+    "palettes": {
+        "catppuccin-mocha": {
+            "name": "Catppuccin Mocha",
+            "primary": "#f5e0dc",
+            "secondary": "#f2cdcd",
+            "accent": "#a6e3a1",
+            "muted": "#cdd6f4",
+            "background": "#1e1e2e"
+        }
+    }
+}

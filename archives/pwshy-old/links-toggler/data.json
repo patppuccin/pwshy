@@ -1,0 +1,8 @@
+{
+  "excludedExtensions": "md",
+  "safeMode": false,
+  "mdLinkStyle": "absolute",
+  "ignoredFolders": [
+    "AWS"
+  ]
+}

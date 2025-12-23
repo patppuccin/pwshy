@@ -1,0 +1,9 @@
+{
+  "id": "links-toggler",
+  "name": "Links Toggler",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Convert between wikilinks and markdown links",
+  "author": "Patrick Ambrose",
+  "isDesktopOnly": false
+}
