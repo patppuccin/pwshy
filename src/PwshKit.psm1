@@ -38,9 +38,6 @@ foreach ($dir in $PublicDirs) {
     }
 }
 
-# Set up Readline configurations
-Set-PSReadlineConfiguration
-
 # Export public functions
 $ExportedFunctions = Get-Command -CommandType Function |
 Where-Object {

@@ -24,16 +24,7 @@ $PSStyle.FileInfo.Directory = "" # Disable Directory Highlights (PowerShell vers
 
 # ==== Setup Tools Listing =================================
 
-$Tools = @(
-    [ordered]@{  Name = 'starship'; Repo = 'https://github.com/starship/starship' },
-    [ordered]@{  Name = 'bat'; Repo = 'https://github.com/sharkdp/bat' },
-    [ordered]@{  Name = 'fzf'; Repo = 'https://github.com/junegunn/fzf' },
-    [ordered]@{  Name = 'zoxide'; Repo = 'https://github.com/ajeetdsouza/zoxide' },
-    [ordered]@{  Name = 'git' ; Repo = 'https://github.com/git/git' },
-    [ordered]@{  Name = 'fastfetch'; Repo = 'https://github.com/fastfetch-cli/fastfetch' },
-    [ordered]@{  Name = 'kubectl'; Repo = 'https://github.com/kubernetes/kubernetes' }
-
-) | ForEach-Object { [PSCustomObject]$_ }
+$Tools = @('starship', 'bat', 'fzf', 'zoxide', 'git', 'fastfetch', 'kubectl')
 
 foreach ($tool in $Tools) {
     if (-not (Get-Command $tool.Name -ErrorAction SilentlyContinue)) {
@@ -56,6 +47,48 @@ if (Test-Path $PwshKitRoot) {
 }
 else {
     $StartupLogs += "Pwshkit not found at: $PwshKitRoot"
+}
+
+# ==== Setup PSReadline ====================================
+
+if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
+
+    # Import PSReadLine module
+    Import-Module PSReadLine
+
+    # Features Configuration
+    Set-PSReadLineOption @{
+        EditMode                      = 'Windows'
+        HistoryNoDuplicates           = $true
+        HistorySearchCursorMovesToEnd = $true
+        PredictionSource              = 'HistoryAndPlugin'
+        PredictionViewStyle           = 'ListView'
+        ShowToolTips                  = $true  
+        BellStyle                     = 'None'
+        MaximumHistoryCount           = 10000
+    }
+
+    Set-PSReadLineOption -AddToHistoryHandler {
+        param($line)
+        $line -notmatch '(password|secret|token|apikey|connectionstring)'
+    }
+
+    # Key Handlers Configuration
+    Set-PSReadLineKeyHandler -Key UpArrow   -Function HistorySearchBackward
+    Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+    Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+a' -Function BeginningOfLine
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+e' -Function EndOfLine
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+LeftArrow'  -Function BackwardWord
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+RightArrow' -Function ForwardWord
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+w' -Function BackwardDeleteWord
+    Set-PSReadLineKeyHandler -Chord 'Alt+d'  -Function DeleteWord
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -Function KillLine
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+y' -Function Yank
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+r' -Function ReverseSearchHistory
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+l' -Function ClearScreen
+    Set-PSReadLineKeyHandler -Key RightArrow -Function AcceptNextSuggestionWord
+
 }
 
 # ==== Load Tools ==========================================
