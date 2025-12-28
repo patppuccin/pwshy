@@ -26,17 +26,17 @@ $PSStyle.FileInfo.Directory = "" # Disable Directory Highlights (PowerShell vers
 
 $Tools = @('starship', 'bat', 'fzf', 'zoxide', 'git', 'fastfetch', 'kubectl')
 
-foreach ($tool in $Tools) {
-    if (-not (Get-Command $tool.Name -ErrorAction SilentlyContinue)) {
-        $MissingTools += $tool
+foreach ($Tool in $Tools) {
+    if (-not (Get-Command $Tool -ErrorAction SilentlyContinue)) {
+        $MissingTools += $Tool
     }
     else {
-        $LoadedTools += $tool
+        $LoadedTools += $Tool
     }
 }
 
 if ($MissingTools.Count -gt 0) {
-    $StartupLogs += "Missing tools: $($MissingTools.Name -join ', ')"
+    $StartupLogs += "Missing tools: $($MissingTools -join ', ')"
 }
 
 # === Load Pwshkit Utils & Plugins =========================
