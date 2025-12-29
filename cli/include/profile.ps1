@@ -27,11 +27,11 @@ $PSStyle.FileInfo.Directory = "" # Disable Directory Highlights (PowerShell vers
 $Tools = @('starship', 'bat', 'fzf', 'zoxide', 'git', 'fastfetch', 'kubectl')
 
 foreach ($Tool in $Tools) {
-    if (-not (Get-Command $Tool -ErrorAction SilentlyContinue)) {
-        $MissingTools += $Tool
+    if (Get-Command $Tool -ErrorAction SilentlyContinue) {
+        $LoadedTools += $Tool
     }
     else {
-        $LoadedTools += $Tool
+        $MissingTools += $Tool
     }
 }
 
@@ -39,7 +39,7 @@ if ($MissingTools.Count -gt 0) {
     $StartupLogs += "Missing tools: $($MissingTools -join ', ')"
 }
 
-# === Load Pwshkit Utils & Plugins =========================
+# ==== Load Pwshkit Utils & Plugins =========================
 
 if (Test-Path $PwshKitRoot) {
     try { Import-Module $PwshKitRoot -ErrorAction Stop }
@@ -49,62 +49,77 @@ else {
     $StartupLogs += "Pwshkit not found at: $PwshKitRoot"
 }
 
-# ==== Setup PSReadline ====================================
+# ==== Setup PSReadLine ====================================
 
-if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
+if ($Host.Name -eq 'ConsoleHost') {
 
-    # Import PSReadLine module
-    Import-Module PSReadLine
+    Import-Module PSReadLine -ErrorAction SilentlyContinue
 
-    # Features Configuration
-    Set-PSReadLineOption @{
-        EditMode                      = 'Windows'
-        HistoryNoDuplicates           = $true
-        HistorySearchCursorMovesToEnd = $true
-        PredictionSource              = 'HistoryAndPlugin'
-        PredictionViewStyle           = 'ListView'
-        ShowToolTips                  = $true  
-        BellStyle                     = 'None'
-        MaximumHistoryCount           = 10000
+    if (Get-Module PSReadLine) {
+
+        $PSReadlineConfigOptions = @{
+            EditMode                      = 'Windows'
+            HistoryNoDuplicates           = $true
+            HistorySearchCursorMovesToEnd = $true
+            PredictionSource              = 'HistoryAndPlugin'
+            PredictionViewStyle           = 'ListView'
+            ShowToolTips                  = $true
+            BellStyle                     = 'None'
+            MaximumHistoryCount           = 10000
+        }
+
+        Set-PSReadLineOption @PSReadlineConfigOptions
+
+        Set-PSReadLineOption -Colors @{
+            Command                = 'Magenta'     # Mauve
+            Parameter              = 'Green'       # Green
+            Operator               = 'DarkYellow'  # Peach
+            Variable               = 'Yellow'      # Yellow
+            String                 = 'White'       # Rosewater
+            Number                 = 'Cyan'        # Sky
+            Type                   = 'Blue'        # Blue
+            Comment                = 'DarkGray'    # Overlay1
+            Keyword                = 'Magenta'     # Pink
+            Error                  = 'Red'         # Red
+        
+            ListPrediction         = 'DarkGray'    # Overlay0
+            ListPredictionSelected = 'DarkMagenta' # Muted Mauve feel
+            ListPredictionTooltip  = 'Magenta'     # Mauve
+            Selection              = 'DarkMagenta' # Theme-backed selection
+        }
+        
+        Set-PSReadLineOption -AddToHistoryHandler {
+            param($line)
+            $line -notmatch '(password|secret|token|apikey|connectionstring)'
+        }
+
+        Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+        Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+        Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+        Set-PSReadLineKeyHandler -Chord 'Ctrl+d' -Function DeleteChar
+        Set-PSReadLineKeyHandler -Chord 'Ctrl+w' -Function BackwardDeleteWord
+        Set-PSReadLineKeyHandler -Chord 'Alt+d' -Function DeleteWord
+        Set-PSReadLineKeyHandler -Chord 'Ctrl+LeftArrow' -Function BackwardWord
+        Set-PSReadLineKeyHandler -Chord 'Ctrl+RightArrow' -Function ForwardWord
+        Set-PSReadLineKeyHandler -Chord 'Ctrl+z' -Function Undo
+        Set-PSReadLineKeyHandler -Chord 'Ctrl+y' -Function Redo
     }
-
-    Set-PSReadLineOption -AddToHistoryHandler {
-        param($line)
-        $line -notmatch '(password|secret|token|apikey|connectionstring)'
-    }
-
-    # Key Handlers Configuration
-    Set-PSReadLineKeyHandler -Key UpArrow   -Function HistorySearchBackward
-    Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
-    Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+a' -Function BeginningOfLine
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+e' -Function EndOfLine
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+LeftArrow'  -Function BackwardWord
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+RightArrow' -Function ForwardWord
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+w' -Function BackwardDeleteWord
-    Set-PSReadLineKeyHandler -Chord 'Alt+d'  -Function DeleteWord
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -Function KillLine
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+y' -Function Yank
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+r' -Function ReverseSearchHistory
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+l' -Function ClearScreen
-    Set-PSReadLineKeyHandler -Key RightArrow -Function AcceptNextSuggestionWord
-
 }
 
 # ==== Load Tools ==========================================
 
-if ('starship' -in $LoadedTools.Name) {
+if ('starship' -in $LoadedTools) {
     $ENV:STARSHIP_CONFIG = Join-Path $ConfigRoot 'starship' 'starship.toml'
-    try { Invoke-Expression (&starship init powershell) }
+    try { Invoke-Expression (& starship init powershell) }
     catch { $StartupLogs += "Failed to initialize starship" }
 }
 
-if ('fastfetch' -in $LoadedTools.Name) {
+if ('fastfetch' -in $LoadedTools) {
     & fastfetch
 }
 
-if ('zoxide' -in $LoadedTools.Name) {
-    try { Invoke-Expression (& { (zoxide init --cmd cd powershell | Out-String) }) } 
+if ('zoxide' -in $LoadedTools) {
+    try { Invoke-Expression (& { zoxide init --cmd cd powershell | Out-String }) }
     catch { $StartupLogs += "Failed to initialize zoxide" }
 }
 
