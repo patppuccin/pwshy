@@ -13,6 +13,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 
 # ==== Prepare Environment =================================
 
+$Startuptimer = [System.Diagnostics.Stopwatch]::StartNew()
 $StartupLogs = @()
 $LoadedTools = @()
 $MissingTools = @()
@@ -70,23 +71,31 @@ if ($Host.Name -eq 'ConsoleHost') {
 
         Set-PSReadLineOption @PSReadlineConfigOptions
 
-        Set-PSReadLineOption -Colors @{
-            Command                = 'Magenta'     # Mauve
-            Parameter              = 'Green'       # Green
-            Operator               = 'DarkYellow'  # Peach
-            Variable               = 'Yellow'      # Yellow
-            String                 = 'White'       # Rosewater
-            Number                 = 'Cyan'        # Sky
-            Type                   = 'Blue'        # Blue
-            Comment                = 'DarkGray'    # Overlay1
-            Keyword                = 'Magenta'     # Pink
-            Error                  = 'Red'         # Red
-        
-            ListPrediction         = 'DarkGray'    # Overlay0
-            ListPredictionSelected = 'DarkMagenta' # Muted Mauve feel
-            ListPredictionTooltip  = 'Magenta'     # Mauve
-            Selection              = 'DarkMagenta' # Theme-backed selection
+        $PSReadLineColorConfig = @{
+            Command                = [ConsoleColor]::DarkMagenta
+            Parameter              = [ConsoleColor]::Magenta      
+            Operator               = [ConsoleColor]::DarkYellow 
+            Variable               = [ConsoleColor]::Magenta      
+            String                 = [ConsoleColor]::Green     
+            Number                 = [ConsoleColor]::Cyan     
+            Type                   = [ConsoleColor]::Blue      
+            Comment                = [ConsoleColor]::DarkGray   
+            Keyword                = [ConsoleColor]::Yellow   
+            Error                  = [ConsoleColor]::Red      
+            Emphasis               = [ConsoleColor]::Blue  
+            Default                = [ConsoleColor]::White      
+
+            InlinePrediction       = [ConsoleColor]::Blue
+            ListPrediction         = [ConsoleColor]::Blue
+            ListPredictionTooltip  = [ConsoleColor]::DarkGray
+            ListPredictionSelected = "`e[48;2;56;58;72m"
+            Selection              = "`e[48;2;56;58;72m"
         }
+
+        Set-PSReadLineOption -Colors $PSReadLineColorConfig
+
+
+        Set-PSReadLineOption -Colors $PSReadLineColorConfig
         
         Set-PSReadLineOption -AddToHistoryHandler {
             param($line)
@@ -115,7 +124,7 @@ if ('starship' -in $LoadedTools) {
 }
 
 if ('fastfetch' -in $LoadedTools) {
-    & fastfetch
+    # & fastfetch
 }
 
 if ('zoxide' -in $LoadedTools) {
@@ -123,6 +132,22 @@ if ('zoxide' -in $LoadedTools) {
     catch { $StartupLogs += "Failed to initialize zoxide" }
 }
 
+
 # ==== Load Environment Variables ==========================
 
 $env:UV_LINK_MODE = 'copy'
+
+# ==== Print Banner ========================================
+
+$Startuptimer.Stop()
+
+$base = "─── profile loaded · took $($Startuptimer.ElapsedMilliseconds) ms" +
+($(if ($StartupLogs.Count) { " · $($StartupLogs.Count) warnings" }))
+
+$width = $Host.UI.RawUI.WindowSize.Width
+
+# reserve space for " ▪"
+$line = ($base + ' ').PadRight($width - 2, '─') + ' ▪'
+
+Write-Host $line -ForegroundColor DarkGray
+
